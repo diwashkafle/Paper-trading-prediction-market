@@ -32,7 +32,7 @@ export class User {
   })
   role: UserRole;
 
-  @Column()
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 10000 })
   virtualBalance: number;
 
   @CreateDateColumn()

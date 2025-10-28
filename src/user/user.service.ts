@@ -1,55 +1,116 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
-import { hash } from 'bcrypt';
+import { compare, hash } from 'bcrypt';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
-    private userRepository: Repository<User>,
+    private readonly userRepository: Repository<User>,
   ) {}
 
-  async createUser(createUserDto: CreateUserDto): Promise<User> {
-    const { username, email, password } = createUserDto;
+  private async verifyPassword(
+    password: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
+    return compare(password, hashedPassword);
+  }
 
+  async createUser(createUserDto: CreateUserDto): Promise<Partial<User>> {
     const existingUser = await this.userRepository.findOneBy([
-      { username },
-      { email },
+      { username: createUserDto.username },
+      { email: createUserDto.email },
     ]);
 
     if (existingUser) {
       throw new ConflictException('Username or email already exists');
     }
 
-    const hashedPassword = await hash(password, 10);
+    const hashedPassword = await hash(createUserDto.password, 10);
 
     const newUser = this.userRepository.create({
       ...createUserDto,
       password: hashedPassword,
     });
     await this.userRepository.save(newUser);
-    return newUser;
+
+    const { password, ...userWithoutPassword } = newUser;
+
+    return userWithoutPassword;
   }
 
-  async getUserProfile(id: number): Promise<User | null> {
-    return this.userRepository.findOneBy({ id });
+  async getUserProfile(email: string): Promise<User | null> {
+    return this.userRepository.findOneBy([{ email }]);
   }
 
-  async updateUserProfile(
+  async getUserById(id: number): Promise<User | null> {
+    return this.userRepository.findOneBy([{ id }]);
+  }
+
+  async updateUser(
     id: number,
-    updateData: Partial<User>,
-  ): Promise<User | null> {
-    await this.userRepository.update(id, updateData);
-    return this.getUserProfile(id);
+    updateUserDto: UpdateUserDto,
+  ): Promise<Partial<User>> {
+    //  Check if user exists
+    const user = await this.getUserById(id);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    //  Check if username is being updated and if it's already taken
+    if (updateUserDto.username) {
+      const existingUser = await this.userRepository.findOne({
+        where: { username: updateUserDto.username },
+      });
+
+      if (existingUser && existingUser.id !== id) {
+        throw new ConflictException('Username already exists');
+      }
+    }
+
+    //  Update the user
+    await this.userRepository.update(id, updateUserDto);
+
+    //  Return updated user without password
+    const updatedUser = await this.getUserById(id);
+    if (!updatedUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    const { password, ...userWithoutPassword } = updatedUser;
+    return userWithoutPassword;
   }
 
-  async changePassword(id: number, newPassword: string): Promise<boolean> {
-    const result = await this.userRepository.update(id, {
-      password: newPassword,
+  async changePassword(
+    id: number,
+    changePasswordDto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    const user = await this.getUserById(id);
+    if (
+      !user ||
+      !(await this.verifyPassword(changePasswordDto.oldPassword, user.password))
+    ) {
+      throw new NotFoundException('User not found or invalid current password');
+    }
+
+    const newHashedPassword = await hash(changePasswordDto.newPassword, 10);
+    const updateResult = await this.userRepository.update(id, {
+      password: newHashedPassword,
     });
-    return (result.affected ?? 0) > 0;
+
+    if (updateResult.affected === 0) {
+      throw new NotFoundException('User not found');
+    }
+    return { message: 'Password changed successfully' };
   }
 }

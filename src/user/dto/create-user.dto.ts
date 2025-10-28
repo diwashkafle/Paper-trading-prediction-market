@@ -8,13 +8,12 @@ export class CreateUserDto {
   username: string;
 
   @IsNotEmpty({ message: 'Email is required' })
-  @IsString({ message: 'Email must be a string' })
   @MaxLength(50, { message: 'Email must be at most 50 characters long' })
   email: string;
 
   @IsNotEmpty({ message: 'Password is required' })
   @IsString({ message: 'Password must be a string' })
   @MinLength(6, { message: 'Password must be at least 8 characters long' })
-  @MaxLength(30, { message: 'Password must be at most 30 characters long' })
+  @MaxLength(12, { message: 'Password must be at most 12 characters long' })
   password: string;
 }
