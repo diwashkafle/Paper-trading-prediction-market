@@ -4,6 +4,8 @@ import { User } from './entities/user.entity';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+// import { AuthGuard } from '@nestjs/passport';
 
 @Controller('user')
 export class UserController {
@@ -12,7 +14,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getUserProfile(@CurrentUser() user: User) {
-    return this.userService.getUserById(user.id);
+    return this.userService.getUserProfile(user.email);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -22,5 +24,14 @@ export class UserController {
     @Body() updateUserDto: UpdateUserDto,
   ) {
     return this.userService.updateUser(user.id, updateUserDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('me/change-password')
+  changePassword(
+    @CurrentUser() user: User,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    return this.userService.changePassword(user.id, changePasswordDto);
   }
 }

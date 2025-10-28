@@ -49,12 +49,22 @@ export class UserService {
     return userWithoutPassword;
   }
 
-  async getUserProfile(email: string): Promise<User | null> {
+  async getUserByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOneBy([{ email }]);
   }
 
   async getUserById(id: number): Promise<User | null> {
     return this.userRepository.findOneBy([{ id }]);
+  }
+
+  async getUserProfile(email: string): Promise<Partial<User>> {
+    const user = await this.getUserByEmail(email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   }
 
   async updateUser(
@@ -96,6 +106,7 @@ export class UserService {
     changePasswordDto: ChangePasswordDto,
   ): Promise<{ message: string }> {
     const user = await this.getUserById(id);
+    console.log(user?.password, changePasswordDto.oldPassword);
     if (
       !user ||
       !(await this.verifyPassword(changePasswordDto.oldPassword, user.password))

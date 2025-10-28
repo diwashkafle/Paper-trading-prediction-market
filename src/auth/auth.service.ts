@@ -31,7 +31,8 @@ export class AuthService {
     };
 
     const secret = this.configService.get<string>('JWT_SECRET');
-    const expiresIn = this.configService.get<number>('JWT_EXPIRES_IN');
+    const expiresInRaw = this.configService.get<string>('JWT_EXPIRES_IN');
+    const expiresIn = Number(expiresInRaw);
 
     return this.jwtService.sign(payload, { secret, expiresIn });
   }
@@ -41,7 +42,15 @@ export class AuthService {
       sub: user.id,
     };
     const secret = this.configService.get<string>('JWT_REFRESH_SECRET');
-    const expiresIn = this.configService.get<number>('JWT_REFRESH_EXPIRES_IN');
+    const expiresInRaw = this.configService.get<string>(
+      'JWT_REFRESH_EXPIRES_IN',
+    );
+    const expiresIn = Number(expiresInRaw);
+    if (!expiresIn) {
+      throw new Error(
+        'JWT_REFRESH_EXPIRES_IN is not defined in environment variables',
+      );
+    }
 
     return this.jwtService.sign(payload, { secret, expiresIn });
   }
@@ -57,7 +66,7 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const user = await this.userService.getUserProfile(loginDto.email);
+    const user = await this.userService.getUserByEmail(loginDto.email);
     if (
       !user ||
       !(await this.verifyPassword(loginDto.password, user.password))

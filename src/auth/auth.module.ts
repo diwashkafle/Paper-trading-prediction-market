@@ -10,7 +10,12 @@ import { RolesGuard } from './guards/roles.guard';
 
 @Global()
 @Module({
-  imports: [UserModule, PassportModule, ConfigModule, JwtModule.register({})],
+  imports: [
+    UserModule,
+    PassportModule.register({ defaultStrategy: 'jwt' }),
+    ConfigModule,
+    JwtModule.register({}),
+  ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, RolesGuard],
   exports: [AuthService, RolesGuard],
