@@ -5,6 +5,9 @@ import { UserModule } from './user/user.module';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
+import { MarketEventModule } from './market-event/market-event.module';
+import { LiveMarketModule } from './live-market/live-market.module';
+import { PortfolioModule } from './portfolio/portfolio.module';
 
 @Module({
   imports: [
@@ -24,6 +27,9 @@ import { AuthModule } from './auth/auth.module';
     }),
     UserModule,
     AuthModule,
+    MarketEventModule,
+    LiveMarketModule,
+    PortfolioModule,
   ],
   controllers: [AppController],
   providers: [AppService],

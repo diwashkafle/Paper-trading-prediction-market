@@ -4,5 +4,5 @@ import { UserRole } from 'src/user/entities/user.entity';
 export const ROLE_KEY = 'roles';
 
 export const Roles = (...roles: UserRole[]) => {
-  SetMetadata(ROLE_KEY, roles);
+  return SetMetadata(ROLE_KEY, roles);
 };
