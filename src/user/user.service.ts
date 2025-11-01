@@ -3,21 +3,53 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
+import { User, UserRole } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { compare, hash } from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class UserService {
+export class UserService implements OnModuleInit {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly configService: ConfigService,
   ) {}
+
+  async onModuleInit() {
+    const adminEmail = this.configService.get<string>('ADMIN_EMAIL');
+    const adminPassword = this.configService.get<string>('ADMIN_PASSWORD');
+
+    if (!adminEmail || !adminPassword) {
+      console.warn(
+        'Admin email or password not set in environment variables. Skipping admin user creation.',
+      );
+      return;
+    }
+    const existingAdmin = await this.userRepository.findOneBy({
+      email: adminEmail,
+    });
+    if (existingAdmin) {
+      console.log('Admin user already exists. Skipping creation.');
+      return;
+    }
+    const hashedPassword = await hash(adminPassword, 10);
+    const adminUser = this.userRepository.create({
+      username: 'admin',
+      email: adminEmail,
+      password: hashedPassword,
+      role: UserRole.ADMIN,
+      virtualBalance: 0,
+    });
+    await this.userRepository.save(adminUser);
+    console.log('Admin user created with email:', adminEmail);
+  }
 
   private async verifyPassword(
     password: string,

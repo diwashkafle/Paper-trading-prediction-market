@@ -45,6 +45,13 @@ export class Event {
   tradingStartDate: Date;
 
   @Column({
+    type: 'timestamp',
+    nullable: true,
+    comment: 'When the event is resolved',
+  })
+  resolutionDate: Date | null;
+
+  @Column({
     type: 'enum',
     enum: EventOutcome,
     default: EventOutcome.PENDING,

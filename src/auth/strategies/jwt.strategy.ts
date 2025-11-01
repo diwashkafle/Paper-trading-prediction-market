@@ -17,10 +17,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly configService: ConfigService,
     private readonly userService: UserService,
   ) {
+    console.log('JWT strategy initialized');
     const secret = configService.get<string>('JWT_SECRET');
     if (!secret) {
       throw new Error('JWT_SECRET is not defined in environment variables');
     }
+    console.log('JWT secret loaded successfully:', secret);
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -29,6 +31,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload) {
+    console.log('Validating JWT payload:', payload);
     try {
       const user = await this.userService.getUserById(payload.sub);
       if (!user) {

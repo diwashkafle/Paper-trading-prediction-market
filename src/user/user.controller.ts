@@ -5,7 +5,6 @@ import { UserService } from './user.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
-// import { AuthGuard } from '@nestjs/passport';
 
 @Controller('user')
 export class UserController {
