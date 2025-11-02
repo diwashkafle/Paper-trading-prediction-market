@@ -9,12 +9,16 @@ import { MarketEventModule } from './market-event/market-event.module';
 import { LiveMarketModule } from './live-market/live-market.module';
 import { PortfolioModule } from './portfolio/portfolio.module';
 import { PayoutModule } from './payout/payout.module';
+import { TaskScheduleService } from './task-schedule/task-schedule.service';
+import { TaskScheduleModule } from './task-schedule/task-schedule.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST,
@@ -32,8 +36,9 @@ import { PayoutModule } from './payout/payout.module';
     LiveMarketModule,
     PortfolioModule,
     PayoutModule,
+    TaskScheduleModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, TaskScheduleService],
 })
 export class AppModule {}
