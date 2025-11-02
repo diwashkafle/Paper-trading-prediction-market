@@ -43,7 +43,7 @@ export class TaskScheduleService {
 
   // This runs every minute (at the 30 second mark) to avoid overlap with the openMarket cron
   // it finds all 'OPEN' events that are ready to go 'CLOSED' and updates their status
-  @Cron(CronExpression.EVERY_30_SECONDS)
+  @Cron('30 * * * * *') // it runs every minute but at 30 second mark, so for this there is not existing CronExpression so it's custom defined as our requirement here.
   async closeMarket() {
     this.logger.log('Checking for events to close');
     const now = new Date();
