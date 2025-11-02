@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { MarketEventModule } from './market-event/market-event.module';
 import { LiveMarketModule } from './live-market/live-market.module';
 import { PortfolioModule } from './portfolio/portfolio.module';
+import { PayoutModule } from './payout/payout.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { PortfolioModule } from './portfolio/portfolio.module';
     MarketEventModule,
     LiveMarketModule,
     PortfolioModule,
+    PayoutModule,
   ],
   controllers: [AppController],
   providers: [AppService],

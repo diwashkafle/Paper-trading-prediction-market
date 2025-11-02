@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Param,
   ParseIntPipe,
   Patch,
@@ -16,12 +17,18 @@ import { MarketEventService } from './market-event.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { ResolveEventDto } from './dto/resolve-event.dto';
+import { PayoutService } from 'src/payout/payout.service';
 
 @Controller('admin/events')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN)
 export class MarketEventAdminController {
-  constructor(private readonly eventService: MarketEventService) {}
+  private readonly logger = new Logger(MarketEventAdminController.name);
+
+  constructor(
+    private readonly eventService: MarketEventService,
+    private readonly payoutService: PayoutService,
+  ) {}
 
   @Get()
   async getAllEvents() {
@@ -51,7 +58,19 @@ export class MarketEventAdminController {
     @Param('id', ParseIntPipe) id: number,
     @Body() resolveEventDto: ResolveEventDto,
   ) {
-    return await this.eventService.resolveEvent(id, resolveEventDto);
+    const resolvedEvent = await this.eventService.resolveEvent(
+      id,
+      resolveEventDto,
+    );
+
+    if (!resolvedEvent) {
+      this.logger.error(`Event resolution failed for event ID: ${id}`);
+      return;
+    }
+
+    this.payoutService.executePayouts(resolvedEvent).catch((error) => {
+      this.logger.error(`Payout execution failed for event ID: ${id}`, error);
+    });
   }
 
   @Post('cancel/:id')
